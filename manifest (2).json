@@ -1,0 +1,26 @@
+{
+  "name": "Kai — Tokyo Street Artist",
+  "short_name": "Kai AI",
+  "description": "Chat with Kai, your chill Tokyo street artist AI companion.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#03045E",
+  "theme_color": "#03045E",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "entertainment"],
+  "lang": "en"
+}
