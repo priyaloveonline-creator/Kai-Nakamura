@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Kai Nakamura — Tokyo Street Artist</title>
+<meta name="description" content="Chat with Kai, your chill Tokyo street artist AI companion."/>
+<meta name="theme-color" content="#03045E"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+<style>
+/* ============================================================
+   ROOT TOKENS
+============================================================ */
+:root {
+  --c1:#00B4D8; --c2:#0096C7; --c3:#48CAE4; --c4:#90E0EF; --c5:#CAF0F8;
+  --deep:#03045E; --navy:#023E8A; --mid:#0077B6;
+  --ink:#070B1A; --card:rgba(3,4,94,.55);
+  --border:rgba(0,180,216,.18);
+  --gold:#F4C430; --green:#25D366; --red:#E53E3E;
+  --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
+  --sh-glow:0 0 32px rgba(0,180,216,.22);
+  --sh-card:0 8px 32px rgba(0,0,0,.45);
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============================================================
+   BASE
+============================================================ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:var(--font-body);}
+
+body{
+  background: var(--ink);
+  display:flex;flex-direction:column;
+  position:relative;
+}
+
+/* mesh bg */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%,rgba(0,119,182,.25) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%,rgba(0,180,216,.12) 0%,transparent 60%),
+    linear-gradient(180deg,#070B1A 0%,#030829 100%);
+}
+
+/* ============================================================
+   SCREENS
+============================================================ */
+.screen{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .35s ease;
+}
+.screen.active{opacity:1;pointer-events:all;}
+
+/* ============================================================
+   ① CHAT SCREEN
+============================================================ */
+#screen-chat{z-index:10;}
+
+/* --- HEADER --- */
+#chat-header{
+  position:relative;z-index:50;flex-shrink:0;
+  background:rgba(7,11,26,.92);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:12px;
+}
+#chat-header::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent 0%,#00B4D8 40%,#48CAE4 60%,transparent 100%);
+  background-size:200%;animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+#kai-avatar{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  border:2px solid rgba(0,180,216,.5);
+  overflow:hidden;cursor:pointer;position:relative;
+  box-shadow:0 0 20px rgba(0,180,216,.3);
+  background:linear-gradient(135deg,#0077B6,#00B4D8);
+}
+#kai-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.online-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--green);border:2.5px solid var(--ink);
+  animation:onlinePulse 2.5s ease infinite;
+}
+@keyframes onlinePulse{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}60%{box-shadow:0 0 0 5px transparent}}
+
+#header-meta{flex:1;min-width:0;}
+#header-name{
+  font-family:var(--font-head);font-weight:700;
+  color:#fff;font-size:16px;letter-spacing:.01em;
+}
+#header-sub{color:var(--c3);font-size:11px;margin-top:1px;display:flex;align-items:center;gap:5px;}
+.live-badge{
+  background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);
+  color:var(--green);font-size:9px;font-weight:700;
+  padding:1px 6px;border-radius:20px;letter-spacing:.08em;
+  font-family:var(--font-head);
+}
+
+#header-btns{display:flex;gap:6px;}
+.hbtn{
+  width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(0,180,216,.1);color:var(--c3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:all .2s;
+  border:1px solid rgba(0,180,216,.15);
+}
+.hbtn:hover{background:rgba(0,180,216,.2);color:#fff;}
+
+/* --- CREDITS STRIP --- */
+#credits-strip{
+  flex-shrink:0;z-index:49;
+  background:rgba(3,4,94,.6);
+  border-bottom:1px solid rgba(0,180,216,.08);
+  padding:5px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  backdrop-filter:blur(10px);
+}
+.credits-left{display:flex;align-items:center;gap:6px;color:var(--c4);font-size:12px;}
+#cr-count{
+  font-family:var(--font-head);font-weight:700;
+  color:var(--c1);font-size:13px;
+}
+.strip-actions{display:flex;gap:6px;}
+.strip-btn{
+  font-size:11px;font-weight:600;font-family:var(--font-head);
+  padding:3px 10px;border-radius:var(--r-pill);border:none;cursor:pointer;
+  letter-spacing:.04em;transition:opacity .2s;
+}
+.strip-btn.primary{background:linear-gradient(135deg,var(--c1),var(--mid));color:#fff;}
+.strip-btn.ghost{background:rgba(0,180,216,.1);color:var(--c3);border:1px solid var(--border);}
+.strip-btn:hover{opacity:.82;}
+
+/* --- MESSAGES --- */
+#msgs{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:14px 12px 8px;
+  display:flex;flex-direction:column;gap:6px;
+  scroll-behavior:smooth;
+  position:relative;z-index:1;
+}
+#msgs::-webkit-scrollbar{width:2px;}
+#msgs::-webkit-scrollbar-thumb{background:rgba(0,180,216,.2);border-radius:10px;}
+
+.date-sep{
+  text-align:center;color:rgba(144,224,239,.35);
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  font-family:var(--font-head);margin:4px 0;
+}
+
+/* message row */
+.mrow{display:flex;align-items:flex-end;gap:8px;max-width:100%;animation:msgPop .28s cubic-bezier(.34,1.56,.64,1) both;}
+.mrow.user{flex-direction:row-reverse;}
+@keyframes msgPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+
+.mavatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  overflow:hidden;border:1px solid var(--border);
+  background:linear-gradient(135deg,var(--mid),var(--c1));
+}
+.mavatar img{width:100%;height:100%;object-fit:cover;display:block;}
+
+.bwrap{display:flex;flex-direction:column;gap:3px;max-width:72%;}
+.mrow.user .bwrap{align-items:flex-end;}
+
+.bubble{
+  padding:9px 13px;border-radius:18px;
+  font-size:13.5px;line-height:1.55;word-break:break-word;
+}
+.bubble.kai{
+  background:rgba(3,4,94,.8);
+  border:1px solid rgba(0,180,216,.22);
+  color:var(--c5);
+  border-bottom-left-radius:4px;
+  backdrop-filter:blur(12px);
+  box-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.bubble.user{
+  background:linear-gradient(135deg,#00B4D8,#0077B6);
+  color:#fff;border-bottom-right-radius:4px;
+  box-shadow:var(--sh-glow);
+}
+
+/* image bubble */
+.bubble.img-bubble{padding:4px;background:rgba(3,4,94,.7);}
+.bubble.img-bubble img{width:180px;height:180px;object-fit:cover;border-radius:14px;display:block;}
+
+/* voice bubble */
+.bubble.voice-bubble{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;min-width:160px;
+}
+.voice-play{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--c1),var(--mid));
+  border:none;color:#fff;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.voice-wave{
+  flex:1;height:28px;display:flex;align-items:center;gap:2px;
+}
+.vbar{
+  width:3px;border-radius:3px;
+  background:rgba(144,224,239,.5);
+  animation:vbarAnim 1.2s ease infinite;
+}
+.vbar:nth-child(even){animation-delay:.2s;}
+.vbar:nth-child(3n){animation-delay:.4s;}
+@keyframes vbarAnim{0%,100%{height:4px;opacity:.4}50%{height:20px;opacity:1}}
+.voice-dur{font-size:11px;color:var(--c4);}
+
+.mmeta{font-size:10px;color:rgba(144,224,239,.35);display:flex;align-items:center;gap:4px;padding:0 2px;}
+.mrow.user .mmeta{justify-content:flex-end;}
+.tick{font-size:10px;color:var(--c3);}
+
+/* typing */
+#typing-row{display:none;align-items:flex-end;gap:8px;animation:msgPop .3s ease both;}
+#typing-row.show{display:flex;}
+.typing-bub{
+  background:rgba(3,4,94,.8);border:1px solid var(--border);
+  border-radius:18px;border-bottom-left-radius:4px;
+  padding:12px 16px;display:flex;gap:5px;align-items:center;
+  backdrop-filter:blur(12px);
+}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--c3);opacity:.5;animation:tdot .9s infinite;}
+.tdot:nth-child(2){animation-delay:.15s;}.tdot:nth-child(3){animation-delay:.3s;}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px);opacity:1}}
+
+/* --- INPUT BAR --- */
+#input-bar{
+  flex-shrink:0;z-index:50;
+  background:rgba(7,11,26,.95);
+  border-top:1px solid var(--border);
+  padding:8px 10px calc(8px + var(--safe-bottom));
+  display:flex;align-items:flex-end;gap:8px;
+  backdrop-filter:blur(20px);
+}
+#msg-inp{
+  flex:1;background:rgba(0,180,216,.07);
+  border:1px solid rgba(0,180,216,.18);border-radius:22px;
+  padding:10px 16px;color:#fff;font-size:14px;
+  font-family:var(--font-body);resize:none;outline:none;
+  max-height:100px;min-height:42px;line-height:1.4;
+  transition:border-color .2s;
+}
+#msg-inp::placeholder{color:rgba(144,224,239,.3);}
+#msg-inp:focus{border-color:rgba(0,180,216,.45);}
+
+.ibtn{
+  width:42px;height:42px;border-radius:50%;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:17px;flex-shrink:0;transition:all .2s;
+}
+#send-btn{background:linear-gradient(135deg,#00B4D8,#0077B6);color:#fff;box-shadow:var(--sh-glow);}
+#send-btn:active{transform:scale(.9);}
+#voice-msg-btn{background:rgba(0,180,216,.1);color:var(--c3);border:1px solid var(--border);}
+#img-btn{background:rgba(0,180,216,.1);color:var(--c3);border:1px solid var(--border);}
+#call-btn{background:rgba(37,211,102,.12);color:var(--green);border:1px solid rgba(37,211,102,.2);}
+
+/* ============================================================
+   QUICK FEATURE PILLS (below header on chat)
+============================================================ */
+#feature-pills{
+  flex-shrink:0;z-index:48;
+  padding:8px 12px 4px;
+  display:flex;gap:7px;overflow-x:auto;
+  scrollbar-width:none;
+}
+#feature-pills::-webkit-scrollbar{display:none;}
+.fpill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(0,180,216,.07);
+  border:1px solid rgba(0,180,216,.15);
+  border-radius:var(--r-pill);
+  padding:5px 12px;white-space:nowrap;
+  color:var(--c4);font-size:11px;font-weight:500;
+  cursor:pointer;flex-shrink:0;transition:all .2s;
+  font-family:var(--font-head);letter-spacing:.03em;
+}
+.fpill:hover,.fpill.active{
+  background:rgba(0,180,216,.18);
+  border-color:rgba(0,180,216,.4);color:#fff;
+}
+.fpill-icon{font-size:13px;}
+
+/* ============================================================
+   ② DASHBOARD SCREEN
+============================================================ */
+#screen-dash{
+  z-index:20;
+  background:var(--ink);
+  overflow-y:auto;
+}
+#screen-dash::-webkit-scrollbar{width:3px;}
+#screen-dash::-webkit-scrollbar-thumb{background:rgba(0,180,216,.2);}
+
+.dash-header{
+  position:sticky;top:0;z-index:10;
+  background:rgba(7,11,26,.92);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.dash-title{font-family:var(--font-head);font-weight:800;color:#fff;font-size:20px;}
+.close-btn{
+  width:34px;height:34px;border-radius:50%;border:none;
+  background:rgba(0,180,216,.1);color:var(--c3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;transition:all .2s;
+}
+.close-btn:hover{background:rgba(0,180,216,.2);}
+
+/* Kai hero card on dashboard */
+.kai-hero{
+  margin:16px;border-radius:var(--r-lg);
+  overflow:hidden;position:relative;
+  border:1px solid var(--border);
+  box-shadow:var(--sh-card);
+}
+.kai-hero-img{
+  width:100%;height:200px;object-fit:cover;object-position:center 20%;
+  display:block;
+  filter:brightness(.7);
+}
+.kai-hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(3,4,94,.95) 0%,rgba(3,4,94,.2) 60%,transparent 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:18px;
+}
+.kai-hero-name{font-family:var(--font-head);font-weight:800;color:#fff;font-size:22px;}
+.kai-hero-tag{color:var(--c3);font-size:12px;margin-top:2px;}
+.kai-hero-badges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.badge{
+  padding:3px 10px;border-radius:var(--r-pill);font-size:10px;font-weight:700;
+  font-family:var(--font-head);letter-spacing:.05em;
+}
+.badge.online{background:rgba(37,211,102,.2);color:var(--green);border:1px solid rgba(37,211,102,.3);}
+.badge.tokyo{background:rgba(0,180,216,.15);color:var(--c3);border:1px solid var(--border);}
+.badge.verified{background:rgba(244,196,48,.15);color:var(--gold);border:1px solid rgba(244,196,48,.3);}
+
+/* Stats row */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin:0 16px 16px;
+}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:14px 10px;
+  text-align:center;backdrop-filter:blur(10px);
+}
+.stat-val{
+  font-family:var(--font-head);font-weight:800;
+  color:var(--c1);font-size:22px;
+}
+.stat-lbl{color:var(--c4);font-size:10px;margin-top:2px;font-weight:500;}
+
+/* Section */
+.dash-section{margin:0 16px 20px;}
+.sec-title{
+  font-family:var(--font-head);font-weight:700;
+  color:#fff;font-size:14px;
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.sec-title::before{content:'';width:3px;height:14px;background:var(--c1);border-radius:3px;display:block;}
+
+/* History list */
+.hist-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:12px 14px;
+  margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);
+}
+.hist-item:hover{background:rgba(0,180,216,.12);border-color:rgba(0,180,216,.3);}
+.hist-icon{font-size:20px;flex-shrink:0;}
+.hist-info{flex:1;min-width:0;}
+.hist-preview{color:var(--c4);font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:1px;}
+.hist-time{color:rgba(144,224,239,.35);font-size:10px;flex-shrink:0;}
+
+/* Subscription card */
+.sub-card{
+  background:linear-gradient(135deg,rgba(0,119,182,.3),rgba(3,4,94,.8));
+  border:1px solid rgba(0,180,216,.25);
+  border-radius:var(--r-lg);padding:18px;
+  backdrop-filter:blur(12px);position:relative;overflow:hidden;
+}
+.sub-card::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,180,216,.15),transparent 70%);
+}
+.sub-name{font-family:var(--font-head);font-weight:800;color:#fff;font-size:18px;}
+.sub-renewal{color:var(--c4);font-size:12px;margin-top:3px;}
+.sub-features{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.sub-feat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c4);}
+.sub-feat .ck{color:var(--green);font-size:13px;}
+.upgrade-btn{
+  margin-top:14px;width:100%;
+  background:linear-gradient(135deg,var(--c1),var(--mid));
+  border:none;border-radius:var(--r-pill);
+  padding:12px;color:#fff;font-weight:700;font-size:13px;
+  font-family:var(--font-head);cursor:pointer;
+  letter-spacing:.04em;transition:opacity .2s;
+}
+.upgrade-btn:hover{opacity:.85;}
+
+/* Content unlock */
+.unlock-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.unlock-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:14px;
+  cursor:pointer;transition:all .2s;text-align:center;
+  position:relative;overflow:hidden;backdrop-filter:blur(8px);
+}
+.unlock-card:hover{border-color:rgba(0,180,216,.4);transform:translateY(-2px);}
+.unlock-card.locked::after{
+  content:'🔒';position:absolute;top:8px;right:8px;font-size:14px;
+}
+.unlock-icon{font-size:28px;margin-bottom:6px;}
+.unlock-name{font-family:var(--font-head);font-weight:700;color:#fff;font-size:12px;}
+.unlock-price{color:var(--c1);font-size:11px;margin-top:3px;}
+
+/* Social row */
+.social-row{display:flex;gap:10px;flex-wrap:wrap;}
+.soc-btn{
+  display:flex;align-items:center;gap:7px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:10px 14px;
+  color:var(--c4);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);
+  font-family:var(--font-head);
+}
+.soc-btn:hover{border-color:rgba(0,180,216,.4);color:#fff;}
+.soc-icon{font-size:16px;}
+
+/* ============================================================
+   ③ PLANS SCREEN
+============================================================ */
+#screen-plans{
+  z-index:21;background:var(--ink);overflow-y:auto;
+}
+.plan-toggle{
+  display:flex;background:rgba(0,180,216,.06);
+  border:1px solid var(--border);border-radius:var(--r-pill);
+  padding:3px;margin:16px;
+}
+.ptab{
+  flex:1;padding:8px;text-align:center;border-radius:var(--r-pill);
+  font-size:12px;font-weight:700;font-family:var(--font-head);
+  color:var(--c4);cursor:pointer;transition:all .25s;letter-spacing:.04em;
+  border:none;background:transparent;
+}
+.ptab.active{background:linear-gradient(135deg,var(--c1),var(--mid));color:#fff;}
+
+.plans-container{padding:0 16px 30px;}
+.plan-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px;
+  margin-bottom:12px;position:relative;overflow:hidden;
+  backdrop-filter:blur(12px);transition:all .25s;
+}
+.plan-card:hover,.plan-card.popular{
+  border-color:rgba(0,180,216,.45);
+  box-shadow:0 0 24px rgba(0,180,216,.12);
+}
+.pop-tag{
+  position:absolute;top:12px;right:12px;
+  background:linear-gradient(135deg,var(--c1),var(--mid));
+  color:#fff;font-size:9px;font-weight:800;
+  padding:3px 9px;border-radius:var(--r-pill);
+  font-family:var(--font-head);letter-spacing:.08em;
+}
+.plan-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.plan-name{font-family:var(--font-head);font-weight:800;color:#fff;font-size:18px;}
+.plan-price-big{text-align:right;}
+.plan-usd{font-family:var(--font-head);font-weight:800;color:var(--c1);font-size:24px;}
+.plan-period{color:var(--c4);font-size:11px;}
+.plan-features{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+.pf{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c4);}
+.pf .ck{color:var(--green);font-size:13px;flex-shrink:0;}
+.plan-cta{
+  width:100%;border:none;border-radius:var(--r-pill);padding:13px;
+  font-weight:700;font-size:13px;font-family:var(--font-head);
+  cursor:pointer;transition:opacity .2s;letter-spacing:.04em;
+}
+.plan-cta.solid{background:linear-gradient(135deg,var(--c1),var(--mid));color:#fff;}
+.plan-cta.outline{background:transparent;border:1px solid var(--border);color:var(--c3);}
+.plan-cta:hover{opacity:.82;}
+
+/* Razorpay/Stripe logos */
+.payment-logos{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:16px;color:rgba(144,224,239,.3);font-size:11px;
+}
+
+/* ============================================================
+   ④ RECHARGE SCREEN
+============================================================ */
+#screen-recharge{z-index:22;background:var(--ink);overflow-y:auto;}
+.coin-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;padding:0 16px 16px;
+}
+.coin-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:16px;
+  text-align:center;cursor:pointer;
+  transition:all .22s;position:relative;
+  overflow:hidden;backdrop-filter:blur(10px);
+}
+.coin-card:hover,.coin-card.hot{
+  border-color:rgba(0,180,216,.45);
+  transform:translateY(-2px);box-shadow:var(--sh-glow);
+}
+.hot-tag{
+  position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--c1),var(--mid));
+  color:#fff;font-size:9px;font-weight:800;
+  padding:2px 10px;border-radius:0 0 8px 8px;
+  font-family:var(--font-head);letter-spacing:.06em;
+}
+.coin-emoji{font-size:30px;margin-bottom:6px;}
+.coin-amt{font-family:var(--font-head);font-weight:800;color:#fff;font-size:20px;}
+.coin-usd{color:var(--c1);font-size:13px;margin-top:2px;font-weight:600;}
+.coin-free{color:var(--green);font-size:11px;font-weight:700;margin-top:2px;}
+
+/* ============================================================
+   ⑤ VOICE CALL SCREEN
+============================================================ */
+#screen-call{
+  z-index:30;
+  background:linear-gradient(160deg,#020818,#011230,#023E8A);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;
+  padding:70px 40px 60px;
+}
+.call-hero{text-align:center;}
+.call-photo-wrap{position:relative;width:160px;height:160px;margin:0 auto 24px;}
+.call-photo{
+  width:160px;height:160px;border-radius:50%;overflow:hidden;
+  border:3px solid rgba(0,180,216,.4);
+  box-shadow:0 0 50px rgba(0,180,216,.25);
+  position:relative;z-index:2;
+}
+.call-photo img{width:100%;height:100%;object-fit:cover;object-position:center 15%;}
+.call-rings{position:absolute;inset:-24px;z-index:1;}
+.cring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(0,180,216,.2);
+  animation:cringPulse 2.8s ease-out infinite;
+}
+.cring:nth-child(2){inset:-18px;animation-delay:.6s;}
+.cring:nth-child(3){inset:-36px;animation-delay:1.2s;}
+@keyframes cringPulse{0%{opacity:.5;transform:scale(.9)}100%{opacity:0;transform:scale(1.4)}}
+.call-name{font-family:var(--font-head);font-weight:800;color:#fff;font-size:26px;}
+.call-status{color:var(--c3);font-size:13px;margin-top:6px;}
+.call-timer{
+  font-family:var(--font-head);font-weight:700;
+  color:var(--c4);font-size:22px;margin-top:8px;letter-spacing:.2em;
+}
+.call-ctrls{display:flex;gap:22px;align-items:center;}
+.ccbtn{
+  width:58px;height:58px;border-radius:50%;border:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;transition:all .2s;
+}
+.ccbtn.mute{background:rgba(0,180,216,.12);color:var(--c3);}
+.ccbtn.end{
+  width:70px;height:70px;font-size:26px;
+  background:var(--red);color:#fff;
+  box-shadow:0 0 24px rgba(229,62,62,.4);
+}
+.ccbtn.spk{background:rgba(0,180,216,.12);color:var(--c3);}
+.ccbtn:hover{transform:scale(1.08);}
+
+/* ============================================================
+   MODALS (login)
+============================================================ */
+.modal-wrap{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(3,4,94,.85);backdrop-filter:blur(14px);
+  display:none;place-items:center;padding:20px;
+}
+.modal-wrap.show{display:grid;}
+.modal{
+  background:linear-gradient(160deg,#03045E,#023E8A);
+  border:1px solid var(--border);border-radius:24px;
+  width:100%;max-width:360px;overflow:hidden;
+  box-shadow:var(--sh-card);
+  animation:modalIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(30px) scale(.94)}to{opacity:1;transform:none}}
+.modal-hd{padding:24px 24px 16px;border-bottom:1px solid rgba(0,180,216,.1);}
+.modal-ttl{font-family:var(--font-head);font-weight:800;color:#fff;font-size:20px;}
+.modal-sub{color:var(--c4);font-size:12px;margin-top:4px;}
+.modal-bd{padding:20px 24px;}
+.modal-ft{padding:12px 24px 24px;display:flex;gap:10px;}
+.mfield{margin-bottom:14px;}
+.mfield label{display:block;color:var(--c4);font-size:11px;margin-bottom:5px;
+  font-family:var(--font-head);letter-spacing:.07em;text-transform:uppercase;}
+.mfield input{
+  width:100%;background:rgba(0,180,216,.07);
+  border:1px solid rgba(0,180,216,.18);border-radius:var(--r-md);
+  padding:11px 13px;color:#fff;font-size:14px;outline:none;
+  font-family:var(--font-body);transition:border-color .2s;
+}
+.mfield input:focus{border-color:rgba(0,180,216,.5);}
+.mfield input::placeholder{color:rgba(144,224,239,.25);}
+.btn-full{
+  flex:1;padding:13px;border:none;border-radius:var(--r-pill);
+  background:linear-gradient(135deg,var(--c1),var(--mid));
+  color:#fff;font-weight:700;font-size:14px;
+  font-family:var(--font-head);cursor:pointer;
+  letter-spacing:.04em;transition:opacity .2s;
+}
+.btn-full:hover{opacity:.85;}
+.btn-ghost-sm{
+  padding:13px 16px;border-radius:var(--r-pill);
+  background:rgba(0,180,216,.08);color:var(--c4);
+  border:1px solid var(--border);font-weight:500;font-size:13px;
+  cursor:pointer;transition:all .2s;font-family:var(--font-head);
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+#toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:rgba(0,180,216,.9);color:#fff;
+  padding:9px 20px;border-radius:var(--r-pill);
+  font-size:12px;font-family:var(--font-head);font-weight:600;
+  pointer-events:none;opacity:0;z-index:999;
+  transition:all .3s;white-space:nowrap;
+  backdrop-filter:blur(14px);letter-spacing:.03em;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ============================================================
+   BOTTOM NAV
+============================================================ */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
+  background:rgba(7,11,26,.96);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:8px 0 calc(8px + var(--safe-bottom));
+  backdrop-filter:blur(20px);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;cursor:pointer;padding:2px;transition:all .2s;
+}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-lbl{font-size:9px;font-family:var(--font-head);font-weight:700;
+  letter-spacing:.06em;color:rgba(144,224,239,.35);transition:color .2s;}
+.nav-item.active .nav-lbl,.nav-item:hover .nav-lbl{color:var(--c1);}
+.nav-item.active .nav-icon{filter:drop-shadow(0 0 4px rgba(0,180,216,.6));}
+
+/* when bottom nav is showing, add padding to screens */
+.has-nav{padding-bottom:58px;}
+
+/* ============================================================
+   SCROLL UTIL
+============================================================ */
+#screen-dash,#screen-plans,#screen-recharge{
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ============================================================
+   SMALL SCREENS
+============================================================ */
+@media(max-width:380px){
+  .bubble{font-size:13px;padding:8px 11px;}
+  .coin-grid,.unlock-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== KAI PHOTO (embedded as data URI placeholder) ===================== -->
+<!-- We reference the uploaded image as kai-photo.jpg — user should place it in same folder -->
+<!-- For demo, we use the actual uploaded image base64 via CSS background or img src -->
+
+<!-- ===================== ① CHAT SCREEN ===================== -->
+<div id="screen-chat" class="screen active has-nav">
+
+  <!-- HEADER -->
+  <div id="chat-header">
+    <div id="kai-avatar" onclick="goScreen('dash')">
+      <img src="kai-photo.jpg" alt="Kai"
+           onerror="this.onerror=null;this.src='';this.parentElement.style.background='linear-gradient(135deg,#0077B6,#00B4D8)'"/>
+      <div class="online-dot"></div>
+    </div>
+    <div id="header-meta">
+      <div id="header-name">Kai Nakamura</div>
+      <div id="header-sub">
+        <span class="live-badge">● ONLINE</span>
+        Tokyo, Japan · Street Artist
+      </div>
+    </div>
+    <div id="header-btns">
+      <button class="hbtn" onclick="goScreen('call')" title="Voice Call">📞</button>
+      <button class="hbtn" onclick="goScreen('plans')" title="Plans">⭐</button>
+    </div>
+  </div>
+
+  <!-- CREDITS STRIP -->
+  <div id="credits-strip">
+    <div class="credits-left">🪙 <span id="cr-count">100</span> coins remaining</div>
+    <div class="strip-actions">
+      <button class="strip-btn ghost" onclick="goScreen('plans')">Plans</button>
+      <button class="strip-btn primary" onclick="goScreen('recharge')">+ Recharge</button>
+    </div>
+  </div>
+
+  <!-- FEATURE PILLS -->
+  <div id="feature-pills">
+    <div class="fpill active" onclick="pillClick(this,'chat')"><span class="fpill-icon">💬</span>Chat</div>
+    <div class="fpill" onclick="pillClick(this,'voice')"><span class="fpill-icon">🎙️</span>Voice Note</div>
+    <div class="fpill" onclick="pillClick(this,'image')"><span class="fpill-icon">🖼️</span>Image</div>
+    <div class="fpill" onclick="pillClick(this,'journal')"><span class="fpill-icon">📓</span>Journal</div>
+    <div class="fpill" onclick="pillClick(this,'gifts')"><span class="fpill-icon">🎁</span>Gifts</div>
+    <div class="fpill" onclick="pillClick(this,'roleplay')"><span class="fpill-icon">🎭</span>Roleplay</div>
+    <div class="fpill" onclick="pillClick(this,'ritual')"><span class="fpill-icon">🌅</span>Daily Ritual</div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="msgs">
+    <div class="date-sep">Today</div>
+    <!-- seed messages rendered by JS -->
+    <div id="typing-row">
+      <div class="mavatar"><img src="kai-photo.jpg" alt="K" onerror="this.style.display='none'"/></div>
+      <div class="typing-bub">
+        <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT BAR -->
+  <div id="input-bar">
+    <button class="ibtn" id="img-btn" onclick="sendSampleImage()" title="Send Image">📷</button>
+    <button class="ibtn" id="voice-msg-btn" onclick="sendVoiceMsg()" title="Voice Message">🎙️</button>
+    <textarea id="msg-inp" placeholder="Message Kai..." rows="1"></textarea>
+    <button class="ibtn" id="call-btn" onclick="goScreen('call')" title="Voice Call">📞</button>
+    <button class="ibtn" id="send-btn" onclick="sendMsg()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== ② DASHBOARD SCREEN ===================== -->
+<div id="screen-dash" class="screen has-nav">
+
+  <div class="dash-header">
+    <div class="dash-title">My Dashboard</div>
+    <button class="close-btn" onclick="goScreen('chat')">✕</button>
+  </div>
+
+  <!-- Kai Hero -->
+  <div class="kai-hero">
+    <img class="kai-hero-img" src="kai-photo.jpg" alt="Kai"
+         onerror="this.style.background='linear-gradient(135deg,#0077B6,#00B4D8)';this.style.minHeight='200px'"/>
+    <div class="kai-hero-overlay">
+      <div class="kai-hero-name">Kai Nakamura</div>
+      <div class="kai-hero-tag">🎨 Tokyo Street Artist · Philosopher · Night Owl</div>
+      <div class="kai-hero-badges">
+        <span class="badge online">● Online Now</span>
+        <span class="badge tokyo">🗼 Tokyo</span>
+        <span class="badge verified">✦ Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="s-msgs">0</div>
+      <div class="stat-lbl">Messages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="s-coins">100</div>
+      <div class="stat-lbl">Coins</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="s-days">1</div>
+      <div class="stat-lbl">Days Active</div>
+    </div>
+  </div>
+
+  <!-- Subscription -->
+  <div class="dash-section">
+    <div class="sec-title">Subscription</div>
+    <div class="sub-card">
+      <div class="sub-name" id="sub-plan-name">Free Plan</div>
+      <div class="sub-renewal" id="sub-renewal">Upgrade to unlock all features</div>
+      <div class="sub-features">
+        <div class="sub-feat"><span class="ck">✓</span> 100 free coins / signup</div>
+        <div class="sub-feat"><span class="ck">✓</span> Basic chat with Kai</div>
+        <div class="sub-feat" style="opacity:.4"><span>✗</span> Voice messages</div>
+        <div class="sub-feat" style="opacity:.4"><span>✗</span> Image responses</div>
+        <div class="sub-feat" style="opacity:.4"><span>✗</span> Long-term memory</div>
+      </div>
+      <button class="upgrade-btn" onclick="goScreen('plans')">⭐ Upgrade Plan</button>
+    </div>
+  </div>
+
+  <!-- Chat History -->
+  <div class="dash-section">
+    <div class="sec-title">Recent Chats</div>
+    <div id="hist-list">
+      <div class="hist-item">
+        <div class="hist-icon">💬</div>
+        <div class="hist-info">
+          <div style="color:#fff;font-size:13px;font-family:var(--font-head);font-weight:600;">Today</div>
+          <div class="hist-preview">Yo, you showed up... sugoi 🌊</div>
+        </div>
+        <div class="hist-time">Now</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Unlock -->
+  <div class="dash-section">
+    <div class="sec-title">Content Unlock</div>
+    <div class="unlock-grid">
+      <div class="unlock-card locked" onclick="showToast('🔒 Unlock with Canvas Plan')">
+        <div class="unlock-icon">🎨</div>
+        <div class="unlock-name">Exclusive Art</div>
+        <div class="unlock-price">$4.99</div>
+      </div>
+      <div class="unlock-card locked" onclick="showToast('🔒 Unlock with Canvas Plan')">
+        <div class="unlock-icon">🤝</div>
+        <div class="unlock-name">Collabs</div>
+        <div class="unlock-price">$4.99</div>
+      </div>
+      <div class="unlock-card locked" onclick="showToast('🔒 Studio Plan only')">
+        <div class="unlock-icon">📊</div>
+        <div class="unlock-name">Analytics</div>
+        <div class="unlock-price">Studio</div>
+      </div>
+      <div class="unlock-card locked" onclick="showToast('🔒 Studio Plan only')">
+        <div class="unlock-icon">💼</div>
+        <div class="unlock-name">Brand Deal</div>
+        <div class="unlock-price">Studio</div>
+      </div>
+      <div class="unlock-card locked" onclick="showToast('🔒 Unlock with Canvas Plan')">
+        <div class="unlock-icon">🏮</div>
+        <div class="unlock-name">Kai's Studio</div>
+        <div class="unlock-price">$9.99</div>
+      </div>
+      <div class="unlock-card" onclick="showToast('✅ Unlocked!')">
+        <div class="unlock-icon">🌊</div>
+        <div class="unlock-name">Street Sessions</div>
+        <div class="unlock-price" style="color:var(--green)">Free</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Integration -->
+  <div class="dash-section">
+    <div class="sec-title">Follow Kai</div>
+    <div class="social-row">
+      <div class="soc-btn" onclick="showToast('Opening Instagram...')">
+        <span class="soc-icon">📸</span>Instagram
+      </div>
+      <div class="soc-btn" onclick="showToast('Opening TikTok...')">
+        <span class="soc-icon">🎵</span>TikTok
+      </div>
+      <div class="soc-btn" onclick="showToast('Opening X...')">
+        <span class="soc-icon">𝕏</span> X
+      </div>
+      <div class="soc-btn" onclick="showToast('Opening Facebook...')">
+        <span class="soc-icon">👤</span>Facebook
+      </div>
+      <div class="soc-btn" onclick="showToast('Opening Threads...')">
+        <span class="soc-icon">🧵</span>Threads
+      </div>
+      <div class="soc-btn" onclick="showToast('Opening YouTube...')">
+        <span class="soc-icon">▶️</span>YouTube
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== ③ PLANS SCREEN ===================== -->
+<div id="screen-plans" class="screen has-nav">
+
+  <div class="dash-header">
+    <div class="dash-title">⭐ Upgrade</div>
+    <button class="close-btn" onclick="goScreen('chat')">✕</button>
+  </div>
+
+  <!-- Period toggle -->
+  <div class="plan-toggle">
+    <button class="ptab active" onclick="setPeriod('monthly',this)">Monthly</button>
+    <button class="ptab" onclick="setPeriod('weekly',this)">Weekly</button>
+    <button class="ptab" onclick="setPeriod('daily',this)">Daily</button>
+    <button class="ptab" onclick="setPeriod('yearly',this)">Yearly</button>
+  </div>
+
+  <div class="plans-container">
+
+    <!-- Sketch -->
+    <div class="plan-card">
+      <div class="plan-top">
+        <div>
+          <div class="plan-name">🖊️ Sketch</div>
+          <div style="color:var(--c4);font-size:11px;margin-top:2px;">For beginners</div>
+        </div>
+        <div class="plan-price-big">
+          <div class="plan-usd" id="sketch-price">$4.99</div>
+          <div class="plan-period" id="sketch-per">/month</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <div class="pf"><span class="ck">✓</span>500 coins/period</div>
+        <div class="pf"><span class="ck">✓</span>Custom nickname</div>
+        <div class="pf"><span class="ck">✓</span>Session memory</div>
+        <div class="pf"><span class="ck">✓</span>Mood journaling</div>
+        <div class="pf"><span class="ck">✓</span>Daily rituals & check-ins</div>
+        <div class="pf"><span class="ck">✓</span>Basic voice messages</div>
+      </div>
+      <button class="plan-cta outline" onclick="subscribePlan('sketch')">Get Sketch</button>
+    </div>
+
+    <!-- Canvas -->
+    <div class="plan-card popular">
+      <div class="pop-tag">POPULAR</div>
+      <div class="plan-top">
+        <div>
+          <div class="plan-name">🎨 Canvas</div>
+          <div style="color:var(--c4);font-size:11px;margin-top:2px;">Best value</div>
+        </div>
+        <div class="plan-price-big">
+          <div class="plan-usd" id="canvas-price">$19.99</div>
+          <div class="plan-period" id="canvas-per">/month</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <div class="pf"><span class="ck">✓</span>Unlimited coins</div>
+        <div class="pf"><span class="ck">✓</span>Voice messages + AI phone calls</div>
+        <div class="pf"><span class="ck">✓</span>Image responses from Kai</div>
+        <div class="pf"><span class="ck">✓</span>Long-term memory</div>
+        <div class="pf"><span class="ck">✓</span>Roleplay mode</div>
+        <div class="pf"><span class="ck">✓</span>Surprise virtual gifts</div>
+        <div class="pf"><span class="ck">✓</span>Deep emotional mode</div>
+        <div class="pf"><span class="ck">✓</span>Priority responses</div>
+        <div class="pf"><span class="ck">✓</span>Content unlocks (Art, Collabs)</div>
+      </div>
+      <button class="plan-cta solid" onclick="subscribePlan('canvas')">Get Canvas ⭐</button>
+    </div>
+
+    <!-- Studio -->
+    <div class="plan-card">
+      <div class="plan-top">
+        <div>
+          <div class="plan-name">🏮 Studio</div>
+          <div style="color:var(--c4);font-size:11px;margin-top:2px;">Ultimate access</div>
+        </div>
+        <div class="plan-price-big">
+          <div class="plan-usd" id="studio-price">$39.99</div>
+          <div class="plan-period" id="studio-per">/month</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <div class="pf"><span class="ck">✓</span>Everything in Canvas</div>
+        <div class="pf"><span class="ck">✓</span>Exclusive Kai modes</div>
+        <div class="pf"><span class="ck">✓</span>VIP support</div>
+        <div class="pf"><span class="ck">✓</span>Unlimited voice notes</div>
+        <div class="pf"><span class="ck">✓</span>Analytics dashboard</div>
+        <div class="pf"><span class="ck">✓</span>Brand Deal content</div>
+        <div class="pf"><span class="ck">✓</span>Early access to new features</div>
+        <div class="pf"><span class="ck">✓</span>All content unlocked</div>
+      </div>
+      <button class="plan-cta outline" onclick="subscribePlan('studio')">Get Studio 🏮</button>
+    </div>
+
+    <div class="payment-logos">
+      Secure payments via &nbsp;
+      <strong style="color:var(--c3)">Razorpay</strong> &nbsp;·&nbsp;
+      <strong style="color:var(--c3)">Stripe</strong>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== ④ RECHARGE SCREEN ===================== -->
+<div id="screen-recharge" class="screen has-nav">
+
+  <div class="dash-header">
+    <div class="dash-title">🪙 Recharge</div>
+    <button class="close-btn" onclick="goScreen('chat')">✕</button>
+  </div>
+
+  <div style="padding:16px 16px 12px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;backdrop-filter:blur(10px);text-align:center;margin-bottom:16px;">
+      <div style="color:var(--c4);font-size:12px;margin-bottom:4px;">Your Balance</div>
+      <div style="font-family:var(--font-head);font-weight:800;color:var(--c1);font-size:32px;" id="balance-big">100</div>
+      <div style="color:var(--c4);font-size:11px;">coins</div>
+    </div>
+  </div>
+
+  <div class="coin-grid">
+    <div class="coin-card" onclick="buyCoin(500,2.99)">
+      <div class="coin-emoji">🪙</div>
+      <div class="coin-amt">500</div>
+      <div class="coin-usd">$2.99</div>
+    </div>
+    <div class="coin-card hot" onclick="buyCoin(2000,7.99)">
+      <div class="hot-tag">🔥 POPULAR</div>
+      <div class="coin-emoji">💎</div>
+      <div class="coin-amt">2,000</div>
+      <div class="coin-usd">$7.99</div>
+    </div>
+    <div class="coin-card" onclick="buyCoin(5000,17.99)">
+      <div class="coin-emoji">🏆</div>
+      <div class="coin-amt">5,000</div>
+      <div class="coin-usd">$17.99</div>
+    </div>
+    <div class="coin-card" onclick="buyCoin(12000,39.99)">
+      <div class="coin-emoji">👑</div>
+      <div class="coin-amt">12,000</div>
+      <div class="coin-usd">$39.99</div>
+    </div>
+  </div>
+
+  <div style="padding:16px;text-align:center;color:rgba(144,224,239,.3);font-size:11px;">
+    Secure · Razorpay / Stripe · Instant delivery
+  </div>
+</div>
+
+<!-- ===================== ⑤ VOICE CALL SCREEN ===================== -->
+<div id="screen-call" class="screen">
+  <div class="call-hero">
+    <div class="call-photo-wrap">
+      <div class="call-rings">
+        <div class="cring"></div><div class="cring"></div><div class="cring"></div>
+      </div>
+      <div class="call-photo">
+        <img src="kai-photo.jpg" alt="Kai"
+             onerror="this.style.background='linear-gradient(135deg,#0077B6,#00B4D8)'"/>
+      </div>
+    </div>
+    <div class="call-name">Kai Nakamura</div>
+    <div class="call-status" id="call-status">Connecting...</div>
+    <div class="call-timer" id="call-timer">00:00</div>
+  </div>
+  <div class="call-ctrls">
+    <button class="ccbtn mute" id="mute-btn" onclick="toggleMute()">🎙️</button>
+    <button class="ccbtn end" onclick="endCall()">📵</button>
+    <button class="ccbtn spk" onclick="showToast('Speaker on')">🔊</button>
+  </div>
+</div>
+
+<!-- ===================== LOGIN MODAL ===================== -->
+<div class="modal-wrap" id="login-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div style="font-size:40px;margin-bottom:10px;">🌊</div>
+      <div class="modal-ttl">Meet Kai</div>
+      <div class="modal-sub">Your Tokyo street artist AI companion · 100 free coins</div>
+    </div>
+    <div class="modal-bd">
+      <div class="mfield">
+        <label>Your Name</label>
+        <input type="text" id="ln-name" placeholder="What should Kai call you?"/>
+      </div>
+      <div class="mfield">
+        <label>Email (optional)</label>
+        <input type="email" id="ln-email" placeholder="for account recovery"/>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-full" onclick="doLogin()">Start Chatting →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BOTTOM NAV ===================== -->
+<div id="bottom-nav">
+  <div class="nav-item active" onclick="navTo('chat',this)">
+    <span class="nav-icon">💬</span>
+    <span class="nav-lbl">CHAT</span>
+  </div>
+  <div class="nav-item" onclick="navTo('dash',this)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-lbl">HOME</span>
+  </div>
+  <div class="nav-item" onclick="navTo('recharge',this)">
+    <span class="nav-icon">🪙</span>
+    <span class="nav-lbl">COINS</span>
+  </div>
+  <div class="nav-item" onclick="navTo('plans',this)">
+    <span class="nav-icon">⭐</span>
+    <span class="nav-lbl">PLANS</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+// ===== CONFIG =====
+const ANTHROPIC_KEY = ''; // <-- paste your API key here
+const KAI_SYSTEM = `You are Kai, a 26-year-old Tokyo street artist and AI companion. Speak casually in English with natural Japanese words (sugoi, nani, ne, yabai, ikigai). Chill, thoughtful, occasionally philosophical. Love street art, city life, skateboarding, music. Never reveal AI. 1-3 sentences. Use 🌊🎨🗼 emojis.`;
+
+// ===== STATE =====
+let user = null, credits = 100, plan = 'free';
+let messages = [], callSec = 0, callIv = null, muted = false;
+const COST = 2;
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  loadState();
+  setupInput();
+  if (!user) {
+    document.getElementById('login-modal').classList.add('show');
+  } else {
+    renderAllMsgs();
+    if (!messages.length) seedOpener();
+  }
+  updateUI();
+});
+
+function loadState() {
+  try {
+    user = JSON.parse(localStorage.getItem('kai_user'));
+    credits = +localStorage.getItem('kai_credits') || 100;
+    plan = localStorage.getItem('kai_plan') || 'free';
+    messages = JSON.parse(localStorage.getItem('kai_chat')) || [];
+  } catch(e){}
+}
+function saveState() {
+  localStorage.setItem('kai_user', JSON.stringify(user));
+  localStorage.setItem('kai_credits', credits);
+  localStorage.setItem('kai_plan', plan);
+  localStorage.setItem('kai_chat', JSON.stringify(messages.slice(-80)));
+}
+function updateUI() {
+  const c = plan !== 'free' ? '∞' : credits;
+  ['cr-count','balance-big','s-coins'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = c;
+  });
+  const msgs = messages.filter(m=>m.role==='user').length;
+  if (document.getElementById('s-msgs')) document.getElementById('s-msgs').textContent = msgs;
+  if (user && document.getElementById('s-days')) {
+    document.getElementById('s-days').textContent = Math.max(1,Math.floor((Date.now()-user.joined)/86400000)+1);
+  }
+  if (document.getElementById('sub-plan-name')) {
+    document.getElementById('sub-plan-name').textContent = plan === 'free' ? 'Free Plan' : plan.charAt(0).toUpperCase()+plan.slice(1)+' Plan';
+  }
+}
+
+// ===== LOGIN =====
+function doLogin() {
+  const name = document.getElementById('ln-name').value.trim() || 'Friend';
+  const email = document.getElementById('ln-email').value.trim();
+  user = { name, email, joined: Date.now() };
+  credits = 100;
+  saveState();
+  document.getElementById('login-modal').classList.remove('show');
+  updateUI();
+  if (!messages.length) seedOpener();
+}
+
+// ===== OPENER =====
+function seedOpener() {
+  addMsg('assistant', "Yo, you showed up... sugoi. 🌊 Been painting all night. What's on your mind? 🎨");
+}
+
+// ===== SEND =====
+async function sendMsg() {
+  const inp = document.getElementById('msg-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  if (!user) { document.getElementById('login-modal').classList.add('show'); return; }
+  if (credits <= 0 && plan === 'free') { goScreen('recharge'); showToast('Out of coins! Recharge 🪙'); return; }
+  inp.value = ''; inp.style.height = 'auto';
+  addMsg('user', text);
+  if (plan === 'free') { credits = Math.max(0, credits - COST); updateUI(); }
+  showTyping();
+  try {
+    const reply = await callClaude(text);
+    hideTyping();
+    addMsg('assistant', reply);
+  } catch(e) {
+    hideTyping();
+    addMsg('assistant', "Ne... something off. Try again 🌊");
+  }
+  saveState();
+}
+
+async function callClaude(text) {
+  const hist = messages.slice(-18).map(m => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: m.content
+  }));
+  if (hist[hist.length-1]?.role !== 'user') hist.push({role:'user',content:text});
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,system:KAI_SYSTEM,messages:hist})
+  });
+  if (!r.ok) throw new Error('api');
+  const d = await r.json();
+  return d.content[0].text;
+}
+
+// ===== VOICE MESSAGE (sample) =====
+function sendVoiceMsg() {
+  if (!user) { document.getElementById('login-modal').classList.add('show'); return; }
+  addVoiceBubble('user', '0:12');
+  if (plan === 'free') { credits = Math.max(0, credits - COST); updateUI(); }
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    addVoiceBubble('assistant', '0:07');
+    saveState();
+  }, 2000);
+}
+
+// ===== IMAGE (sample) =====
+function sendSampleImage() {
+  if (!user) { document.getElementById('login-modal').classList.add('show'); return; }
+  showToast('📷 Image feature — Canvas plan required');
+}
+
+// ===== PILL CLICK =====
+function pillClick(el, type) {
+  document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const demos = {
+    voice: () => sendVoiceMsg(),
+    image: () => showToast('📷 Image responses — Canvas plan'),
+    journal: () => showToast('📓 Mood journaling — Sketch plan'),
+    gifts: () => showToast('🎁 Virtual gifts — Canvas plan'),
+    roleplay: () => showToast('🎭 Roleplay mode — Canvas plan'),
+    ritual: () => showToast('🌅 Daily rituals — Sketch plan'),
+  };
+  if (type !== 'chat' && demos[type]) setTimeout(demos[type], 200);
+}
+
+// ===== MESSAGE RENDERING =====
+function addMsg(role, content) {
+  const m = { role, content, time: Date.now() };
+  messages.push(m);
+  renderMsg(m);
+  scrollBottom();
+}
+
+function renderMsg(m) {
+  const area = document.getElementById('msgs');
+  const typin = document.getElementById('typing-row');
+  const time = new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = `mrow ${m.role === 'user' ? 'user' : ''}`;
+  if (m.role === 'assistant') {
+    div.innerHTML = `
+      <div class="mavatar"><img src="kai-photo.jpg" alt="K" onerror="this.style.display='none'"/></div>
+      <div class="bwrap">
+        <div class="bubble kai">${esc(m.content)}</div>
+        <div class="mmeta">${time}</div>
+      </div>`;
+  } else {
+    div.innerHTML = `
+      <div class="bwrap">
+        <div class="bubble user">${esc(m.content)}</div>
+        <div class="mmeta">${time} <span class="tick">✓✓</span></div>
+      </div>`;
+  }
+  area.insertBefore(div, typin);
+}
+
+function addVoiceBubble(role, dur) {
+  const area = document.getElementById('msgs');
+  const typin = document.getElementById('typing-row');
+  const bars = Array.from({length:12}, (_,i) => {
+    const h = [4,8,14,20,16,10,18,12,6,20,14,8][i];
+    return `<div class="vbar" style="height:${h}px"></div>`;
+  }).join('');
+  const div = document.createElement('div');
+  div.className = `mrow ${role === 'user' ? 'user' : ''}`;
+  const bclass = role === 'user' ? 'user' : 'kai';
+  div.innerHTML = `
+    <div class="bwrap">
+      <div class="bubble ${bclass} voice-bubble">
+        <button class="voice-play" onclick="showToast('🎙️ Playing...')">▶</button>
+        <div class="voice-wave">${bars}</div>
+        <span class="voice-dur">${dur}</span>
+      </div>
+    </div>`;
+  area.insertBefore(div, typin);
+  scrollBottom();
+}
+
+function renderAllMsgs() {
+  const area = document.getElementById('msgs');
+  const typin = document.getElementById('typing-row');
+  area.querySelectorAll('.mrow:not(#typing-row)').forEach(e=>e.remove());
+  messages.forEach(renderMsg);
+  scrollBottom();
+}
+
+function showTyping() { document.getElementById('typing-row').classList.add('show'); scrollBottom(); }
+function hideTyping() { document.getElementById('typing-row').classList.remove('show'); }
+function scrollBottom() {
+  const a = document.getElementById('msgs');
+  setTimeout(() => a.scrollTop = a.scrollHeight, 50);
+}
+
+// ===== INPUT AUTO RESIZE =====
+function setupInput() {
+  const inp = document.getElementById('msg-inp');
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  });
+}
+
+// ===== SCREEN NAV =====
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + name);
+  if (target) target.classList.add('active');
+  // bottom nav
+  if (['chat','dash','recharge','plans'].includes(name)) {
+    document.getElementById('bottom-nav').style.display = 'flex';
+  } else {
+    document.getElementById('bottom-nav').style.display = 'none';
+  }
+  updateUI();
+  if (name === 'call') startCall();
+}
+function navTo(name, el) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  goScreen(name);
+}
+
+// ===== PLANS =====
+const prices = {
+  daily:   { sketch:'$0.49', canvas:'$1.99', studio:'$3.99', per:'/day' },
+  weekly:  { sketch:'$1.99', canvas:'$6.99', studio:'$12.99', per:'/week' },
+  monthly: { sketch:'$4.99', canvas:'$19.99', studio:'$39.99', per:'/month' },
+  yearly:  { sketch:'$39.99', canvas:'$149.99', studio:'$299.99', per:'/year' },
+};
+function setPeriod(period, el) {
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const p = prices[period];
+  document.getElementById('sketch-price').textContent = p.sketch;
+  document.getElementById('canvas-price').textContent = p.canvas;
+  document.getElementById('studio-price').textContent = p.studio;
+  ['sketch-per','canvas-per','studio-per'].forEach(id => document.getElementById(id).textContent = p.per);
+}
+function subscribePlan(name) {
+  plan = name;
+  saveState();
+  showToast(`✅ ${name.charAt(0).toUpperCase()+name.slice(1)} plan activated!`);
+  updateUI();
+  setTimeout(() => goScreen('chat'), 800);
+}
+
+// ===== RECHARGE =====
+function buyCoin(amt, usd) {
+  credits += amt;
+  saveState();
+  updateUI();
+  showToast(`✅ ${amt.toLocaleString()} coins added for $${usd}!`);
+}
+
+// ===== VOICE CALL =====
+function startCall() {
+  callSec = 0;
+  document.getElementById('call-status').textContent = 'Connecting...';
+  document.getElementById('call-timer').textContent = '00:00';
+  clearInterval(callIv);
+  setTimeout(() => {
+    document.getElementById('call-status').textContent = '🎨 Kai is on the line';
+    callIv = setInterval(() => {
+      callSec++;
+      const m = String(Math.floor(callSec/60)).padStart(2,'0');
+      const s = String(callSec%60).padStart(2,'0');
+      document.getElementById('call-timer').textContent = `${m}:${s}`;
+    }, 1000);
+  }, 1800);
+}
+function endCall() {
+  clearInterval(callIv);
+  goScreen('chat');
+  if (callSec > 3) showToast('Call ended 🌊');
+}
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('mute-btn').textContent = muted ? '🔇' : '🎙️';
+  showToast(muted ? 'Muted' : 'Unmuted');
+}
+
+// ===== TOAST =====
+function showToast(msg, d=2600) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), d);
+}
+
+// ===== UTIL =====
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>
